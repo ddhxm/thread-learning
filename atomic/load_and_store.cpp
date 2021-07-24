@@ -18,23 +18,26 @@ typedef enum memory_order {
 atomic<int> foo (0);
 
 void set_foo(int x) {
-  foo.store(x,memory_order_seq_cst);     // set value atomically自动设置值，写操作
+  cout << "set foo: " << x << '\n';
+  foo.store(x,memory_order_relaxed);     // set value atomically自动设置值，写操作
 }
 
 void print_foo() {
   int x;
   do {
-    x = foo.load(memory_order_seq_cst);  // get value atomically自动得到值，读操作
+    x = foo.load(memory_order_relaxed);  // get value atomically自动得到值，读操作,若从foo读出的值为0，则
   } while (x==0);
-  cout << "foo: " << x << '\n';
+  cout << "print foo: " << x << '\n';
 }
 
 int main ()
 {
   thread first (print_foo);
-  thread second (set_foo,10);
+  thread second (set_foo,0);
+  thread third (set_foo,10);
   first.join();
   second.join();
+  third.join();
   system("pause");
   return 0;
 }

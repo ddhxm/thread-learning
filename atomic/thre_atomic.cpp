@@ -16,11 +16,18 @@ using namespace std;
       输出线程x胜利的ID，且线程x重新set为TRUE，使得其他的线程无法进入if语句
       atomic_flag主要用于标志10个线程中的胜者，即第一个调用test_and_set()函数的线程
       
-
+      采用atomic exchange实现：
+      同样，atomic_flag对象可以用atomic来代替，并调用原子的exchange来实现胜者thread输出；
+      winner.exchange(true),即用val替换包含的值，并返回它之前的值，注意返回的是之前的值
+      整个操作是原子的(原子的读-修改-写操作):在值被读取(将被返回)的时刻和被该函数修改的时刻之间，该值不受其他线程的影响。
+      因此，当线程x完成计数for循环之后，进入if判断，winner.exchange(true)为返回winner之前的值即false，同时，之后的
+      winner值被设为TRUE，其他线程无法进入if循环，则得到最终的胜者。
 
 */
 atomic<bool> ready (false);//创建bool型原子对象，同时初始化值为false
 atomic_flag winner = ATOMIC_FLAG_INIT;//将atomic_flag初始化为false
+
+atomic<bool> winner1 (false);//创建bool型原子对象，同时初始化值为false
 
 void count1m (int id) {
   //当main函数将ready置TRUE时，tread x开始计数直到100000
@@ -28,6 +35,7 @@ void count1m (int id) {
   for (volatile int i=0; i<1000000; ++i) {}          // 开始计数
   if (!winner.test_and_set()) { cout << "thread #" << id << " won!\n"; }
   //返回当前atomic_flag的值，若为false，则进入输出行，并将atomic_flag=TRUE，此时其他其他线程无法进入，得到胜出的线程id
+  //if (!winner1.exchange(true)) { std::cout << "thread #" << id << " won!\n"; }
 };
  
 int main ()
